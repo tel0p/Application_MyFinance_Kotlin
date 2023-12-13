@@ -3,10 +3,8 @@ package com.example.myfinance.db
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
-import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -227,7 +225,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
             val name = cursor.getString(cursor.getColumnIndex(COLUMN_EXPENSE_CATEGORY))
             val color = cursor.getString(cursor.getColumnIndex(COLUMN_EXPENSE_CATEGORY_COLOR))
 
-            val category = Category(name, color,"")
+            val category = Category(name, color,"", "", "")
             expenseCategories.add(category)
         }
 
@@ -248,7 +246,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
             val name = cursor.getString(cursor.getColumnIndex(COLUMN_INCOME_CATEGORY))
             val color = cursor.getString(cursor.getColumnIndex(COLUMN_INCOME_CATEGORY_COLOR))
 
-            val category = Category(name, color,"")
+            val category = Category(name, color,"", "", "")
             incomeCategories.add(category)
         }
 
@@ -281,14 +279,14 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
         db.close()
     }
 
-    // Добавление нового расхода
     @SuppressLint("Range")
     fun addExpense(expenseName: String, amount: String, color: String, comment: String, date: String, userLogin: String) {
         val db: SQLiteDatabase = writableDatabase
 
         // Проверяем, существует ли запись с такой же датой и категорией
-        val query = "SELECT * FROM $TABLE_EXPENSE WHERE $COLUMN_EXPENSE_USER_LOGIN = ? AND $COLUMN_EXPENSE_DATE = ? AND $COLUMN_EXPENSE_NAME = ?"
-        val cursor = db.rawQuery(query, arrayOf(userLogin, date, expenseName))
+        val expenseId = generateUniqueId()
+
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_EXPENSE WHERE $COLUMN_EXPENSE_ID = ?", arrayOf(expenseId.toString()))
 
         if (cursor.moveToFirst()) {
             // Если запись существует, обновляем ее, добавив к текущей сумме новую сумму
@@ -297,13 +295,14 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
 
             val values = ContentValues().apply {
                 put(COLUMN_EXPENSE_AMOUNT, newAmount.toString())
+                put(COLUMN_EXPENSE_COMMENT, comment)
             }
 
-            db.update(TABLE_EXPENSE, values, "$COLUMN_EXPENSE_USER_LOGIN = ? AND $COLUMN_EXPENSE_DATE = ? AND $COLUMN_EXPENSE_NAME = ?", arrayOf(userLogin, date, expenseName))
-
+            db.update(TABLE_EXPENSE, values, "$COLUMN_EXPENSE_ID = ?", arrayOf(expenseId.toString()))
         } else {
             // Если записи не существует, добавляем новую запись
             val values = ContentValues().apply {
+                put(COLUMN_EXPENSE_ID, expenseId)
                 put(COLUMN_EXPENSE_NAME, expenseName)
                 put(COLUMN_EXPENSE_AMOUNT, amount)
                 put(COLUMN_EXPENSE_COLOR, color)
@@ -314,6 +313,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
 
             db.insert(TABLE_EXPENSE, null, values)
         }
+
         cursor.close()
         db.close()
     }
@@ -350,7 +350,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
             val categoryColor = cursor.getString(cursor.getColumnIndex(COLUMN_EXPENSE_COLOR))
             val totalAmount = cursor.getString(cursor.getColumnIndex("total_amount"))
 
-            val category = Category(categoryName, categoryColor, totalAmount)
+            val category = Category(categoryName, categoryColor, totalAmount, "", "")
             expense.add(category)
         }
         cursor.close()
@@ -358,28 +358,27 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
         return expense
     }
 
-    // Добавление нового дохода
     @SuppressLint("Range")
     fun addIncome(incomeName: String, amount: String, color: String, comment: String, date: String, userLogin: String) {
         val db: SQLiteDatabase = writableDatabase
 
-        // Проверяем, существует ли запись с такой же датой и категорией
-        val cursor = db.rawQuery("SELECT * FROM $TABLE_INCOME WHERE $COLUMN_INCOME_USER_LOGIN = ? AND $COLUMN_INCOME_DATE = ? AND $COLUMN_INCOME_NAME = ?", arrayOf(userLogin, date, incomeName))
+        val incomeId = generateUniqueId()
+
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_INCOME WHERE $COLUMN_INCOME_ID = ?", arrayOf(incomeId.toString()))
 
         if (cursor.moveToFirst()) {
-            // Если запись существует, обновляем ее, добавив к текущей сумме новую сумму
             val currentAmount = cursor.getString(cursor.getColumnIndex(COLUMN_INCOME_AMOUNT)).toInt()
             val newAmount = currentAmount + amount.toInt()
 
             val values = ContentValues().apply {
                 put(COLUMN_INCOME_AMOUNT, newAmount.toString())
+                put(COLUMN_INCOME_COMMENT, comment)
             }
 
-            db.update(TABLE_INCOME, values, "$COLUMN_INCOME_USER_LOGIN = ? AND $COLUMN_INCOME_DATE = ? AND $COLUMN_INCOME_NAME = ?", arrayOf(userLogin, date, incomeName))
-
+            db.update(TABLE_INCOME, values, "$COLUMN_INCOME_ID = ?", arrayOf(incomeId.toString()))
         } else {
-            // Если записи не существует, добавляем новую запись
             val values = ContentValues().apply {
+                put(COLUMN_INCOME_ID, incomeId)
                 put(COLUMN_INCOME_NAME, incomeName)
                 put(COLUMN_INCOME_AMOUNT, amount)
                 put(COLUMN_INCOME_COLOR, color)
@@ -427,7 +426,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
             val categoryColor = cursor.getString(cursor.getColumnIndex(COLUMN_INCOME_COLOR))
             val totalAmount = cursor.getString(cursor.getColumnIndex("total_amount"))
 
-            val category = Category(categoryName, categoryColor, totalAmount)
+            val category = Category(categoryName, categoryColor, totalAmount, "", "")
             income.add(category)
         }
 
@@ -435,5 +434,63 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
         db.close()
         return income
     }
+
+    @SuppressLint("Range")
+    fun getIncomeInformationForCategory(userLogin: String?, categoryName: String): List<Category> {
+        val categoriesList = mutableListOf<Category>()
+        val db = readableDatabase
+
+        val query = "SELECT * FROM $TABLE_INCOME WHERE $COLUMN_INCOME_USER_LOGIN = ? AND $COLUMN_INCOME_NAME = ?"
+
+        val cursor = db.rawQuery(query, arrayOf(userLogin, categoryName))
+
+        if (cursor.moveToFirst()) {
+            do {
+                val categoryName = cursor.getString(cursor.getColumnIndex(COLUMN_INCOME_NAME))
+                val categoryColor = cursor.getString(cursor.getColumnIndex(COLUMN_INCOME_COLOR))
+                val amount = cursor.getString(cursor.getColumnIndex(COLUMN_INCOME_AMOUNT))
+                val date = cursor.getString(cursor.getColumnIndex(COLUMN_INCOME_DATE))
+                val comment = cursor.getString(cursor.getColumnIndex(COLUMN_INCOME_COMMENT))
+
+                val category = Category(categoryName, categoryColor, amount, comment, date)
+                categoriesList.add(category)
+            } while (cursor.moveToNext())
+        }
+
+        cursor.close()
+        db.close()
+        return categoriesList
+    }
+
+    @SuppressLint("Range")
+    fun getExpenseInformationForCategory(userLogin: String?, categoryName: String): List<Category> {
+        val categoriesList = mutableListOf<Category>()
+        val db = readableDatabase
+
+        val query =
+            "SELECT * FROM $TABLE_EXPENSE WHERE $COLUMN_EXPENSE_USER_LOGIN = ? AND $COLUMN_EXPENSE_NAME = ?"
+
+        val cursor = db.rawQuery(query, arrayOf(userLogin, categoryName))
+
+        if (cursor.moveToFirst()) {
+            do {
+                val categoryName = cursor.getString(cursor.getColumnIndex(COLUMN_EXPENSE_NAME))
+                val categoryColor = cursor.getString(cursor.getColumnIndex(COLUMN_EXPENSE_COLOR))
+                val amount = cursor.getString(cursor.getColumnIndex(COLUMN_EXPENSE_AMOUNT))
+                val date = cursor.getString(cursor.getColumnIndex(COLUMN_EXPENSE_DATE))
+                val comment = cursor.getString(cursor.getColumnIndex(COLUMN_EXPENSE_COMMENT))
+
+                val category = Category(categoryName, categoryColor, amount, comment, date)
+                categoriesList.add(category)
+            } while (cursor.moveToNext())
+        }
+
+        cursor.close()
+        db.close()
+        return categoriesList
+    }
 }
 
+private fun generateUniqueId(): Long {
+    return System.currentTimeMillis()
+}

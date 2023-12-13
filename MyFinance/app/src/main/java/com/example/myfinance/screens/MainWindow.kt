@@ -58,13 +58,17 @@ fun MainWindow() {
     val totalExpense = expense.sumOf { it.amountMoney.toIntOrNull() ?: 0 }
     val totalIncomeString = "$totalIncome ₽"
     val totalExpenseString = "$totalExpense ₽"
+    val selectedCategoryForInformation= remember { mutableStateOf<Category?>(null) }
     var goToMenuWindow by remember { mutableStateOf(false) }
     var goToAddOperation by remember { mutableStateOf(false) }
+    var goToInformationWindow by remember { mutableStateOf(false) }
 
     if (goToMenuWindow) {
         Intent(context, MenuWindow()::class.java).action
     } else if (goToAddOperation) {
         Intent(context, AddOperationWindow()::class.java).action
+    } else if (goToInformationWindow) {
+        Intent(context, InformationCategoryWindow(selectedCategoryForInformation.value)::class.java).action
     } else {
         Column(
             Modifier.background(colorResource(R.color.backgroundColor)),
@@ -269,7 +273,9 @@ fun MainWindow() {
                             contentPadding = PaddingValues(5.dp),
                         ) {
                             items(expense) { category ->
-                                StyleExpenses(category)
+                                StyleExpenses(category, selectedCategoryForInformation){
+                                    goToInformationWindow = true
+                                }
                             }
                         }
                     }
@@ -279,7 +285,9 @@ fun MainWindow() {
                             contentPadding = PaddingValues(5.dp),
                         ) {
                             items(income) { category ->
-                                StyleIncome(category)
+                                StyleIncome(category, selectedCategoryForInformation){
+                                    goToInformationWindow = true
+                                }
                             }
                         }
                     }
@@ -290,17 +298,22 @@ fun MainWindow() {
 }
 
 @Composable
-fun StyleCategory(category: Category, backgroundColor: Int) {
+fun StyleCategoryMainWindow(category: Category, selectedCategoryForInformation: MutableState<Category?>, backgroundColor: Int, onClick: () -> Unit) {
+
     Card(
         modifier = Modifier
             .padding(10.dp)
             .height(50.dp)
+            .clickable {
+                selectedCategoryForInformation.value = category
+                onClick()
+            }
             .clip(
                 shape = RoundedCornerShape(20.dp)
             ),
         colors = CardDefaults.cardColors(
             containerColor = colorResource(backgroundColor),
-        ),
+        )
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
@@ -341,15 +354,15 @@ fun StyleCategory(category: Category, backgroundColor: Int) {
 }
 
 @Composable
-fun StyleExpenses(category: Category) {
+fun StyleExpenses(category: Category, selectedCategoryForInformation: MutableState<Category?>, onClick: () -> Unit) {
     val backgroundColor = getBackgroundColor(category.colorCategory)
-    StyleCategory(category, backgroundColor)
+    StyleCategoryMainWindow(category, selectedCategoryForInformation, backgroundColor, onClick)
 }
 
 @Composable
-fun StyleIncome(category: Category) {
+fun StyleIncome(category: Category, selectedCategoryForInformation: MutableState<Category?>, onClick: () -> Unit) {
     val backgroundColor = getBackgroundColor(category.colorCategory)
-    StyleCategory(category, backgroundColor)
+    StyleCategoryMainWindow(category, selectedCategoryForInformation, backgroundColor, onClick)
 }
 
 private fun getBackgroundColor(color: String): Int {

@@ -56,9 +56,17 @@ fun AddCategoryWindow() {
     var nameCategory by remember { mutableStateOf("") }
     val category = listOf("Расходы", "Доходы")
     var goToAddOperationWindow by remember { mutableStateOf(false) }
-    val colors = listOf(R.color.red, R.color.yellow, R.color.blue, R.color.green, R.color.pink, R.color.purple, R.color.orange)
-    var currentColor by remember { mutableStateOf("transparent")}
-    var selectedColor by remember { mutableStateOf("")}
+    val colors = listOf(
+        R.color.red,
+        R.color.yellow,
+        R.color.blue,
+        R.color.green,
+        R.color.pink,
+        R.color.purple,
+        R.color.orange
+    )
+    var currentColor by remember { mutableStateOf("transparent") }
+    var selectedColor by remember { mutableStateOf("") }
 
     if (goToAddOperationWindow) {
         Intent(LocalContext.current, AddOperationWindow()::class.java).action
@@ -147,11 +155,14 @@ fun AddCategoryWindow() {
                             textAlign = TextAlign.Center,
                             fontSize = 20.sp,
                             color = colorResource(R.color.textColor)
-                        )},
+                        )
+                    },
                     value = nameCategory.trimStart(),
                     onValueChange = { text ->
                         nameCategory = text
-                        error = if (text.trimStart().length > 20) "Название не должно превышать 20 символов" else "" },
+                        error =
+                            if (text.trimStart().length > 20) "Название не должно превышать 20 символов" else ""
+                    },
                     modifier = Modifier
                         .padding(bottom = 10.dp)
                         .width(350.dp),
@@ -167,18 +178,16 @@ fun AddCategoryWindow() {
                     ),
                     shape = CircleShape
                 )
-                if (error.isNotEmpty()) {
-                    Text(
-                        text = error,
-                        color = Color.Red,
-                        fontSize = 10.sp,
-                    )
-                }
+                Text(
+                    text = error,
+                    color = if (error.isNotEmpty()) Color.Red else Color.Transparent,
+                    fontSize = 10.sp,
+                )
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    colors.forEach{color ->
+                    colors.forEach { color ->
                         val isSelected = selectedColor == color.toString()
 
                         Box(
@@ -211,9 +220,13 @@ fun AddCategoryWindow() {
                 Button(
                     onClick = {
                         if (nameCategory == "" || currentColor == "transparent") {
-                            Toast.makeText(context, "Название категории не введено или не выбран цвет", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                context,
+                                "Название категории не введено или не выбран цвет",
+                                Toast.LENGTH_LONG
+                            ).show()
                         } else {
-                            if (error.isEmpty()){
+                            if (error.isEmpty()) {
                                 when (selectedCategory) {
                                     "Расходы" -> {
                                         db.addExpenseCategory(nameCategory, currentColor, file)
@@ -223,10 +236,18 @@ fun AddCategoryWindow() {
                                         db.addIncomeCategory(nameCategory, currentColor, file)
                                     }
                                 }
-                                Toast.makeText(context, "Категория ${nameCategory} создана", Toast.LENGTH_LONG).show()
+                                Toast.makeText(
+                                    context,
+                                    "Категория ${nameCategory} создана",
+                                    Toast.LENGTH_LONG
+                                ).show()
                                 goToAddOperationWindow = true
                             } else {
-                                Toast.makeText(context, "Исправьте ошибки в форме", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "Исправьте ошибки в форме",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         }
                     },

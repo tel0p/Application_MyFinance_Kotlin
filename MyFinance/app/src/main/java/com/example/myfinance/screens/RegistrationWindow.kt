@@ -83,11 +83,17 @@ fun RegistrationWindow() {
             TextField(
                 singleLine = true,
                 label = { Text(text = "Логин", color = colorResource(R.color.textColor)) },
-                placeholder = { Text(text = "Введите логин", color = colorResource(R.color.textColor)) },
+                placeholder = {
+                    Text(
+                        text = "Введите логин",
+                        color = colorResource(R.color.textColor)
+                    )
+                },
                 value = login.trim(),
                 onValueChange = { text ->
                     login = text
-                    loginError = if (text.length > 20) "Логин не должен превышать 20 символов" else ""
+                    loginError =
+                        if (text.length > 20) "Логин не должен превышать 20 символов" else ""
                 },
                 modifier = Modifier
                     .padding(bottom = 10.dp, top = 150.dp)
@@ -103,23 +109,27 @@ fun RegistrationWindow() {
                 shape = CircleShape
             )
 
-            if (loginError.isNotEmpty()) {
-                Text(
-                    text = loginError,
-                    color = Color.Red,
-                    fontSize = 10.sp,
-                    modifier = Modifier.padding(start = 20.dp)
-                )
-            }
+            Text(
+                text = loginError,
+                color = if (loginError.isNotEmpty()) Color.Red else Color.Transparent,
+                fontSize = 10.sp,
+                modifier = Modifier.padding(start = 20.dp)
+            )
 
             TextField(
                 singleLine = true,
                 label = { Text(text = "Пароль", color = colorResource(R.color.textColor)) },
-                placeholder = { Text(text = "Введите пароль", color = colorResource(R.color.textColor)) },
+                placeholder = {
+                    Text(
+                        text = "Введите пароль",
+                        color = colorResource(R.color.textColor)
+                    )
+                },
                 value = password.trim(),
                 onValueChange = { text ->
                     password = text
-                    passwordError = if (text.length < 5) "Пароль должен содержать не менее 5 символов" else ""
+                    passwordError =
+                        if (text.length < 5) "Пароль должен содержать не менее 5 символов" else ""
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier
@@ -136,23 +146,32 @@ fun RegistrationWindow() {
                 shape = CircleShape
             )
 
-            if (passwordError.isNotEmpty()) {
-                Text(
-                    text = passwordError,
-                    color = Color.Red,
-                    fontSize = 10.sp,
-                    modifier = Modifier.padding(start = 20.dp)
-                )
-            }
+            Text(
+                text = passwordError,
+                color = if (passwordError.isNotEmpty()) Color.Red else Color.Transparent,
+                fontSize = 10.sp,
+                modifier = Modifier.padding(start = 20.dp)
+            )
 
             TextField(
                 singleLine = true,
-                label = { Text(text = "Подтверждение пароля", color = colorResource(R.color.textColor)) },
-                placeholder = { Text(text = "Подтвердите пароль", color = colorResource(R.color.textColor)) },
+                label = {
+                    Text(
+                        text = "Подтверждение пароля",
+                        color = colorResource(R.color.textColor)
+                    )
+                },
+                placeholder = {
+                    Text(
+                        text = "Подтвердите пароль",
+                        color = colorResource(R.color.textColor)
+                    )
+                },
                 value = truePassword.trim(),
                 onValueChange = { text ->
                     truePassword = text
-                    truePasswordError = if (text.length < 5) "Пароль должен содержать не менее 5 символов" else ""
+                    truePasswordError =
+                        if (text.length < 5) "Пароль должен содержать не менее 5 символов" else ""
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier
@@ -169,14 +188,12 @@ fun RegistrationWindow() {
                 shape = CircleShape
             )
 
-            if (truePasswordError.isNotEmpty()) {
-                Text(
-                    text = truePasswordError,
-                    color = Color.Red,
-                    fontSize = 10.sp,
-                    modifier = Modifier.padding(start = 20.dp)
-                )
-            }
+            Text(
+                text = truePasswordError,
+                color = if (truePasswordError.isNotEmpty()) Color.Red else Color.Transparent,
+                fontSize = 10.sp,
+                modifier = Modifier.padding(start = 20.dp)
+            )
 
             Button(
                 onClick = {
@@ -192,7 +209,8 @@ fun RegistrationWindow() {
                             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                         }
                     } else {
-                        Toast.makeText(context, "Исправьте ошибки в форме", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Исправьте ошибки в форме", Toast.LENGTH_SHORT)
+                            .show()
                     }
                 },
                 Modifier.padding(10.dp),

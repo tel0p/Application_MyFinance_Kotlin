@@ -47,7 +47,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
@@ -57,7 +56,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.example.myfinance.R
 import com.example.myfinance.db.Category
 import com.example.myfinance.db.DBHelper
@@ -72,15 +70,17 @@ fun MyFullScreenDialog(
 ) {
     Dialog(
         onDismissRequest = onDismissRequest,
-        properties = DialogProperties(
-            dismissOnClickOutside = false
-        )
     ) {
         Box(
             modifier = Modifier
-                .height(350.dp)
+                .height(370.dp)
                 .width(300.dp)
                 .clip(
+                    shape = RoundedCornerShape(20.dp)
+                )
+                .border(
+                    width = 2.dp,
+                    color = Color.White,
                     shape = RoundedCornerShape(20.dp)
                 )
         ) {
@@ -96,7 +96,7 @@ fun AddOperationWindow() {
     val db = DBHelper(context)
     val userLogin = FileClass().readLoginFromFile(context)
     var selectedCategory by remember { mutableStateOf("Расходы") }
-    val selectedCategories = remember { mutableStateOf<Category?>(null) }
+    val selectedCategoryForAdd = remember { mutableStateOf<Category?>(null) }
     var amountMoney by remember { mutableStateOf("") }
     var comment by remember { mutableStateOf("") }
     val category = listOf("Расходы", "Доходы")
@@ -110,161 +110,187 @@ fun AddOperationWindow() {
     val selectedDay = remember { mutableStateOf(0) }
     var goToMainWindow by remember { mutableStateOf(false) }
     var goToAddCategoryWindow by remember { mutableStateOf(false) }
-    var goToCalendarWindow by remember { mutableStateOf(false) }
+    var calendarDialogOpen by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf("") }
 
     if (goToMainWindow) {
         Intent(LocalContext.current, MainWindow()::class.java).action
     } else if (goToAddCategoryWindow) {
         Intent(LocalContext.current, AddCategoryWindow()::class.java).action
-    } else if (goToCalendarWindow ) {
-
-        MyFullScreenDialog(
-            onDismissRequest = { goToCalendarWindow = false },
-            content = {
-                Column(
-                    Modifier.background(colorResource(R.color.backgroundColor)).fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Card(
-                        modifier = Modifier
-                            .height(80.dp)
-                            .background(colorResource(R.color.cardDarkColor))
-                    ) {
-                        Row(
-                            Modifier
-                                .fillMaxSize()
-                                .background(colorResource(R.color.cardDarkColor)),
-                            horizontalArrangement = Arrangement.Start
-                        ) {
-
-                            Column(
-                                Modifier
-                                    .fillMaxSize(),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Text(
-                                    text = "${getMonthName(selectedMonth.value)} ${selectedYear.value}",
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = TextAlign.Center,
-                                    color = colorResource(R.color.textColor),
-                                    fontSize = 30.sp
-                                )
-                            }
-                        }
-                    }
+    } else {
+        if (calendarDialogOpen ) {
+            MyFullScreenDialog(
+                onDismissRequest = { calendarDialogOpen = false },
+                content = {
                     Column(
                         Modifier
+                            .background(colorResource(R.color.backgroundColor))
                             .fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Row {
-                            listOf("пн", "вт", "ср", "чт", "пт", "сб", "вс").forEach { day ->
-                                Text(
-                                    text = day,
-                                    modifier = Modifier.weight(1f),
-                                    textAlign = TextAlign.Center,
-                                    color = colorResource(R.color.textColor)
-                                )
-                            }
-                        }
-                        for (row in 0 until rows) {
-                            Row {
-                                for (column in 0 until 7) {
-                                    val day = row * 7 + column + 1 - firstDayOfWeek
-                                    if (day in 1..daysInMonth) {
-                                        Text(
-                                            text = day.toString(),
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .clickable { selectedDay.value = day },
-                                            textAlign = TextAlign.Center,
-                                            color = if (selectedDay.value == day) colorResource(R.color.tryTextColor) else colorResource(
-                                                R.color.textColor
-                                            )
-                                        )
-                                    } else {
-                                        Spacer(modifier = Modifier.weight(1f))
-                                    }
+                        Card(
+                            modifier = Modifier
+                                .height(80.dp)
+                                .background(colorResource(R.color.cardDarkColor))
+                        ) {
+                            Row(
+                                Modifier
+                                    .fillMaxSize()
+                                    .background(colorResource(R.color.cardDarkColor)),
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+
+                                Column(
+                                    Modifier
+                                        .fillMaxSize(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "${getMonthName(selectedMonth.value)} ${selectedYear.value}",
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textAlign = TextAlign.Center,
+                                        color = colorResource(R.color.textColor),
+                                        fontSize = 30.sp
+                                    )
                                 }
                             }
                         }
-                        Row(
-                            modifier = Modifier.padding(top = 20.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        Column(
+                            Modifier
+                                .fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            Button(
-                                onClick = {
-                                    selectedMonth.value -= 1
-                                    if (selectedMonth.value < 0) {
-                                        selectedMonth.value = 11
-                                        selectedYear.value -= 1
-                                    }
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(5.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = colorResource(
-                                        R.color.cardLightColor
+                            Row {
+                                listOf("пн", "вт", "ср", "чт", "пт", "сб", "вс").forEach { day ->
+                                    Text(
+                                        text = day,
+                                        modifier = Modifier.weight(1f),
+                                        textAlign = TextAlign.Center,
+                                        color = colorResource(R.color.textColor)
                                     )
-                                )
-                            ) {
-                                Text("Предыдущий месяц", color = colorResource(R.color.textColor))
+                                }
                             }
-
-                            Button(
-                                onClick = {
-                                    selectedMonth.value += 1
-                                    if (selectedMonth.value > 11) {
-                                        selectedMonth.value = 0
-                                        selectedYear.value += 1
+                            for (row in 0 until rows) {
+                                Row {
+                                    for (column in 0 until 7) {
+                                        val day = row * 7 + column + 1 - firstDayOfWeek
+                                        if (day in 1..daysInMonth) {
+                                            Text(
+                                                text = day.toString(),
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .clickable { selectedDay.value = day },
+                                                textAlign = TextAlign.Center,
+                                                color = if (selectedDay.value == day) colorResource(
+                                                    R.color.tryTextColor
+                                                ) else colorResource(
+                                                    R.color.textColor
+                                                )
+                                            )
+                                        } else {
+                                            Spacer(modifier = Modifier.weight(1f))
+                                        }
                                     }
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(5.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = colorResource(
-                                        R.color.cardLightColor
-                                    )
-                                )
-                            ) {
-                                Text("Следующий месяц", color = colorResource(R.color.textColor))
+                                }
                             }
-                        }
-                        Column() {
-                            Button(
-                                onClick = {
-                                    if (selectedDay.value != 0) {
-                                        Date.saveDate(
-                                            selectedDay.value.toString().padStart(2, '0'),
-                                            (selectedMonth.value + 1).toString().padStart(2, '0'),
-                                            selectedYear.value.toString()
+                            Row(
+                                modifier = Modifier.padding(top = 20.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Button(
+                                    onClick = {
+                                        selectedMonth.value -= 1
+                                        if (selectedMonth.value < 0) {
+                                            selectedMonth.value = 11
+                                            selectedYear.value -= 1
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(5.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = colorResource(
+                                            R.color.cardLightColor
                                         )
-                                        goToCalendarWindow = false
-                                        Toast.makeText(context, "Дата: ${selectedDay.value.toString().padStart(2, '0')}.${(selectedMonth.value + 1).toString().padStart(2, '0')}.${selectedYear.value} успешно выбрана", Toast.LENGTH_LONG).show()
-                                    } else {
-                                        Toast.makeText(context, "Выберите день", Toast.LENGTH_LONG).show()
-                                    }
-                                },
-                                modifier = Modifier
-                                    .padding(5.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = colorResource(
-                                        R.color.cardLightColor
                                     )
-                                )
-                            ) {
-                                Text("Подтвердить", color = colorResource(R.color.textColor))
+                                ) {
+                                    Text(
+                                        "Предыдущий месяц",
+                                        color = colorResource(R.color.textColor)
+                                    )
+                                }
+
+                                Button(
+                                    onClick = {
+                                        selectedMonth.value += 1
+                                        if (selectedMonth.value > 11) {
+                                            selectedMonth.value = 0
+                                            selectedYear.value += 1
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(5.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = colorResource(
+                                            R.color.cardLightColor
+                                        )
+                                    )
+                                ) {
+                                    Text(
+                                        "Следующий месяц",
+                                        color = colorResource(R.color.textColor)
+                                    )
+                                }
+                            }
+                            Column() {
+                                Button(
+                                    onClick = {
+                                        if (selectedDay.value != 0) {
+                                            Date.saveDate(
+                                                selectedDay.value.toString().padStart(2, '0'),
+                                                (selectedMonth.value + 1).toString()
+                                                    .padStart(2, '0'),
+                                                selectedYear.value.toString()
+                                            )
+                                            calendarDialogOpen = false
+                                            Toast.makeText(
+                                                context,
+                                                "Дата: ${
+                                                    selectedDay.value.toString().padStart(2, '0')
+                                                }.${
+                                                    (selectedMonth.value + 1).toString()
+                                                        .padStart(2, '0')
+                                                }.${selectedYear.value} успешно выбрана",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        } else {
+                                            Toast.makeText(
+                                                context,
+                                                "Выберите день",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .padding(5.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = colorResource(
+                                            R.color.cardLightColor
+                                        )
+                                    )
+                                ) {
+                                    Text("Подтвердить", color = colorResource(R.color.textColor))
+                                }
                             }
                         }
                     }
                 }
-            }
-        )
-    } else {
+            )
+        }
+
         Column(
             Modifier.background(colorResource(R.color.backgroundColor)),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -339,38 +365,50 @@ fun AddOperationWindow() {
                 }
             }
 
-            Row {
-                TextField(
-                    singleLine = true,
-                    placeholder = {
-                        Text(
-                            text = "0",
-                            Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center,
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Row(){
+                    TextField(
+                        singleLine = true,
+                        placeholder = {
+                            Text(
+                                text = "0",
+                                Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center,
+                                fontSize = 30.sp,
+                                color = colorResource(R.color.textColor)
+                            )
+                        },
+                        value = amountMoney,
+                        onValueChange = { text ->
+                            if (!(text == "0" || text.startsWith("0"))) {
+                                amountMoney = text.filter { it.isDigit() }
+                                error = if (text.trimStart().length > 7) "Сумма не может превышать 7-ми значное число" else ""
+                            }
+                        },
+                        modifier = Modifier.width(150.dp),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number
+                        ),
+                        colors = TextFieldDefaults.textFieldColors(
+                            containerColor = Color.Transparent,
+                            unfocusedIndicatorColor = colorResource(R.color.textColor),
+                            focusedIndicatorColor = colorResource(R.color.boxColor),
+                        ),
+                        textStyle = TextStyle(
                             fontSize = 30.sp,
+                            textAlign = TextAlign.Center,
                             color = colorResource(R.color.textColor)
                         )
-                    },
-                    value = amountMoney,
-                    onValueChange = { text ->
-                        if (!(text == "0" || text.startsWith("0"))) {
-                            amountMoney = text.filter { it.isDigit() }
-                        }
-                    },
-                    modifier = Modifier.width(150.dp),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number
-                    ),
-                    colors = TextFieldDefaults.textFieldColors(
-                        containerColor = Color.Transparent,
-                        unfocusedIndicatorColor = colorResource(R.color.textColor),
-                        focusedIndicatorColor = colorResource(R.color.boxColor),
-                    ),
-                    textStyle = TextStyle(
-                        fontSize = 30.sp,
-                        textAlign = TextAlign.Center,
-                        color = colorResource(R.color.textColor)
                     )
+                    Text("₽", color = colorResource(R.color.textColor), fontSize = 20.sp)
+                }
+                Text(
+                    text = error,
+                    color = if (error.isNotEmpty()) Color.Red else Color.Transparent,
+                    fontSize = 10.sp,
                 )
             }
             Card(
@@ -406,7 +444,7 @@ fun AddOperationWindow() {
                                 contentPadding = PaddingValues(5.dp),
                             ) {
                                 items(expenseCategory) { category ->
-                                    StyleExpensesCategory(category, selectedCategories)
+                                    StyleExpensesCategory(category, selectedCategoryForAdd)
                                 }
                             }
                         }
@@ -417,7 +455,7 @@ fun AddOperationWindow() {
                                 contentPadding = PaddingValues(5.dp),
                             ) {
                                 items(incomeCategory) { category ->
-                                    StyleIncomeCategory(category, selectedCategories)
+                                    StyleIncomeCategory(category, selectedCategoryForAdd)
                                 }
                             }
                         }
@@ -437,7 +475,7 @@ fun AddOperationWindow() {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     IconButton(
-                        onClick = { goToCalendarWindow = true },
+                        onClick = { calendarDialogOpen = true },
                         Modifier
                             .background(
                                 colorResource(R.color.iconButtonColor),
@@ -467,13 +505,17 @@ fun AddOperationWindow() {
                 Text("Комментарий:", color = colorResource(R.color.textColor))
                 TextField(
                     placeholder = {
-                        Text(text = "Комментарий",
+                        Text(
+                            text = "Комментарий",
                             Modifier.fillMaxSize(),
                             textAlign = TextAlign.Center,
                             fontSize = 30.sp,
-                            color = colorResource(R.color.textColor)) },
+                            color = colorResource(R.color.textColor)
+                        )
+                    },
                     value = comment,
-                    onValueChange = { text -> comment = text },
+                    onValueChange = { text -> comment = text
+                    },
                     modifier = Modifier
                         .width(350.dp)
                         .fillMaxHeight(0.4f),
@@ -495,36 +537,45 @@ fun AddOperationWindow() {
                 ) {
                     Button(
                         onClick = {
-                            if (amountMoney.isEmpty() || selectedCategories.value == null) {
+                            if (amountMoney.isEmpty() || selectedCategoryForAdd.value == null) {
                                 Toast.makeText(context, "Не указана сумма или не выбрана категория", Toast.LENGTH_LONG).show()
                             } else {
                                 if (userLogin != null) {
-                                    when (selectedCategory) {
-                                        "Расходы" -> {
-                                            db.addExpense(
-                                                selectedCategories.value!!.category,
-                                                amountMoney,
-                                                selectedCategories.value!!.colorCategory,
-                                                comment,
-                                                Date.getDate(),
-                                                userLogin
-                                            )
-                                        }
-                                        "Доходы" -> {
-                                            db.addIncome(
-                                                selectedCategories.value!!.category,
-                                                amountMoney,
-                                                selectedCategories.value!!.colorCategory,
-                                                comment,
-                                                Date.getDate(),
-                                                userLogin
-                                            )
+                                    if (error.isEmpty()) {
+                                        when (selectedCategory) {
+                                            "Расходы" -> {
+                                                db.addExpense(
+                                                    selectedCategoryForAdd.value!!.category,
+                                                    amountMoney,
+                                                    selectedCategoryForAdd.value!!.colorCategory,
+                                                    comment.trimStart().trimEnd(),
+                                                    Date.getDate(),
+                                                    userLogin
+                                                )
+                                            }
 
+                                            "Доходы" -> {
+                                                db.addIncome(
+                                                    selectedCategoryForAdd.value!!.category,
+                                                    amountMoney,
+                                                    selectedCategoryForAdd.value!!.colorCategory,
+                                                    comment,
+                                                    Date.getDate(),
+                                                    userLogin
+                                                )
+
+                                            }
                                         }
+                                        Toast.makeText(
+                                            context,
+                                            "Категория ${selectedCategoryForAdd.value!!.category} добавлена",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        Date.clearDate()
+                                        goToMainWindow = true
+                                    } else {
+                                        Toast.makeText(context, "Исправьте ошибки в форме", Toast.LENGTH_SHORT).show()
                                     }
-                                    Toast.makeText(context, "Категория ${selectedCategories.value!!.category} добавлена", Toast.LENGTH_LONG).show()
-                                    Date.clearDate()
-                                    goToMainWindow = true
                                 }
                             }
                         },
@@ -542,7 +593,7 @@ fun AddOperationWindow() {
 }
 
 @Composable
-fun StyleCategory(category: Category, selectedCategories: MutableState<Category?>, backgroundColor: Int) {
+fun StyleCategoryAddOperationWindow(category: Category, selectedCategories: MutableState<Category?>, backgroundColor: Int) {
     val isSelected = selectedCategories.value == category
 
     Card(
@@ -583,13 +634,13 @@ fun StyleCategory(category: Category, selectedCategories: MutableState<Category?
 @Composable
 fun StyleExpensesCategory(category: Category, selectedCategories: MutableState<Category?>) {
     val backgroundColor = getBackgroundColor(category.colorCategory)
-    StyleCategory(category, selectedCategories, backgroundColor)
+    StyleCategoryAddOperationWindow(category, selectedCategories, backgroundColor)
 }
 
 @Composable
 fun StyleIncomeCategory(category: Category, selectedCategories: MutableState<Category?>) {
     val backgroundColor = getBackgroundColor(category.colorCategory)
-    StyleCategory(category, selectedCategories, backgroundColor)
+    StyleCategoryAddOperationWindow(category, selectedCategories, backgroundColor)
 }
 
 private fun getBackgroundColor(color: String): Int {
