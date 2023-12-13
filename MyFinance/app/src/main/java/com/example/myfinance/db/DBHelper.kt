@@ -5,10 +5,12 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import java.text.SimpleDateFormat
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
+import java.util.Locale
 
 
 class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
@@ -283,13 +285,11 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
     fun addExpense(expenseName: String, amount: String, color: String, comment: String, date: String, userLogin: String) {
         val db: SQLiteDatabase = writableDatabase
 
-        // Проверяем, существует ли запись с такой же датой и категорией
         val expenseId = generateUniqueId()
 
         val cursor = db.rawQuery("SELECT * FROM $TABLE_EXPENSE WHERE $COLUMN_EXPENSE_ID = ?", arrayOf(expenseId.toString()))
 
         if (cursor.moveToFirst()) {
-            // Если запись существует, обновляем ее, добавив к текущей сумме новую сумму
             val currentAmount = cursor.getString(cursor.getColumnIndex(COLUMN_EXPENSE_AMOUNT)).toInt()
             val newAmount = currentAmount + amount.toInt()
 
@@ -300,7 +300,6 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
 
             db.update(TABLE_EXPENSE, values, "$COLUMN_EXPENSE_ID = ?", arrayOf(expenseId.toString()))
         } else {
-            // Если записи не существует, добавляем новую запись
             val values = ContentValues().apply {
                 put(COLUMN_EXPENSE_ID, expenseId)
                 put(COLUMN_EXPENSE_NAME, expenseName)
@@ -449,17 +448,18 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
                 val categoryName = cursor.getString(cursor.getColumnIndex(COLUMN_INCOME_NAME))
                 val categoryColor = cursor.getString(cursor.getColumnIndex(COLUMN_INCOME_COLOR))
                 val amount = cursor.getString(cursor.getColumnIndex(COLUMN_INCOME_AMOUNT))
-                val date = cursor.getString(cursor.getColumnIndex(COLUMN_INCOME_DATE))
+                val dateStr = cursor.getString(cursor.getColumnIndex(COLUMN_INCOME_DATE))
                 val comment = cursor.getString(cursor.getColumnIndex(COLUMN_INCOME_COMMENT))
 
-                val category = Category(categoryName, categoryColor, amount, comment, date)
+                val category = Category(categoryName, categoryColor, amount, comment, dateStr)
                 categoriesList.add(category)
             } while (cursor.moveToNext())
         }
 
         cursor.close()
         db.close()
-        return categoriesList
+
+        return categoriesList.sortedByDescending { SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).parse(it.date) }
     }
 
     @SuppressLint("Range")
@@ -477,17 +477,18 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
                 val categoryName = cursor.getString(cursor.getColumnIndex(COLUMN_EXPENSE_NAME))
                 val categoryColor = cursor.getString(cursor.getColumnIndex(COLUMN_EXPENSE_COLOR))
                 val amount = cursor.getString(cursor.getColumnIndex(COLUMN_EXPENSE_AMOUNT))
-                val date = cursor.getString(cursor.getColumnIndex(COLUMN_EXPENSE_DATE))
+                val dateStr = cursor.getString(cursor.getColumnIndex(COLUMN_EXPENSE_DATE))
                 val comment = cursor.getString(cursor.getColumnIndex(COLUMN_EXPENSE_COMMENT))
 
-                val category = Category(categoryName, categoryColor, amount, comment, date)
+                val category = Category(categoryName, categoryColor, amount, comment, dateStr)
                 categoriesList.add(category)
             } while (cursor.moveToNext())
         }
 
         cursor.close()
         db.close()
-        return categoriesList
+
+        return categoriesList.sortedByDescending { SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).parse(it.date) }
     }
 }
 
