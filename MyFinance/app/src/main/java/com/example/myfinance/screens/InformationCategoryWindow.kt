@@ -110,8 +110,6 @@ fun InformationCategoryWindow(selectedCategory: Category?) {
 
 @Composable
 fun StyleCategoryInformationWindow(category: Category, backgroundColor: Int) {
-    var expanded by remember { mutableStateOf(false) }
-
     Card(
         modifier = Modifier
             .padding(10.dp)
@@ -127,7 +125,7 @@ fun StyleCategoryInformationWindow(category: Category, backgroundColor: Int) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(40.dp),
+                    .height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 Box(

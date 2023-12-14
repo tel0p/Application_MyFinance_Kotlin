@@ -127,7 +127,6 @@ fun AddOperationWindow() {
                     Column(
                         Modifier
                             .background(colorResource(R.color.backgroundColor))
-                            .verticalScroll(rememberScrollState())
                             .fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -136,27 +135,20 @@ fun AddOperationWindow() {
                                 .height(80.dp)
                                 .background(colorResource(R.color.cardDarkColor))
                         ) {
-                            Row(
+                            Column(
                                 Modifier
                                     .fillMaxSize()
                                     .background(colorResource(R.color.cardDarkColor)),
-                                horizontalArrangement = Arrangement.Start
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
                             ) {
-
-                                Column(
-                                    Modifier
-                                        .fillMaxSize(),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    Text(
-                                        text = "${getMonthName(selectedMonth.value)} ${selectedYear.value}",
-                                        modifier = Modifier.fillMaxWidth(),
-                                        textAlign = TextAlign.Center,
-                                        color = colorResource(R.color.textColor),
-                                        fontSize = 30.sp
-                                    )
-                                }
+                                Text(
+                                    text = "${getMonthName(selectedMonth.value)} ${selectedYear.value}",
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Center,
+                                    color = colorResource(R.color.textColor),
+                                    fontSize = 30.sp
+                                )
                             }
                         }
                         Column(
