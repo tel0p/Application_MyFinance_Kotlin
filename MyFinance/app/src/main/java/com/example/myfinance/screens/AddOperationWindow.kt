@@ -20,9 +20,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
@@ -125,6 +127,7 @@ fun AddOperationWindow() {
                     Column(
                         Modifier
                             .background(colorResource(R.color.backgroundColor))
+                            .verticalScroll(rememberScrollState())
                             .fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -318,12 +321,17 @@ fun AddOperationWindow() {
                                 goToMainWindow = true },
                             tint = Color.White
                         )
-                        Text(
-                            "Добавление операции",
-                            Modifier.padding(start = 90.dp),
-                            fontSize = 15.sp,
-                            color = colorResource(R.color.textColor)
-                        )
+                        Column(
+                            Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                "Добавление операции",
+                                fontSize = 15.sp,
+                                color = colorResource(R.color.textColor)
+                            )
+                        }
                     }
                     Row(
                         Modifier.fillMaxWidth(),

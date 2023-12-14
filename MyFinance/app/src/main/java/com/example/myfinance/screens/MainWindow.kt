@@ -71,7 +71,7 @@ fun MainWindow() {
         Intent(context, InformationCategoryWindow(selectedCategoryForInformation.value)::class.java).action
     } else {
         Column(
-            Modifier.background(colorResource(R.color.backgroundColor)),
+            Modifier.background(colorResource(R.color.backgroundColor)).verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Card(
@@ -98,12 +98,18 @@ fun MainWindow() {
                             },
                             tint = Color.White
                         )
-                        Text(
-                            "Итого",
-                            Modifier.padding(start = 125.dp),
-                            fontSize = 30.sp,
-                            color = colorResource(R.color.textColor)
-                        )
+                        Column(
+                            Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                             verticalArrangement = Arrangement.Center)
+                        {
+                            Text(
+                                "Итого",
+                                fontSize = 30.sp,
+                                color = colorResource(R.color.textColor)
+                            )
+                        }
+
                     }
                     Text(
                         text = if (selectedCategory == "Расходы") totalExpenseString else totalIncomeString,
